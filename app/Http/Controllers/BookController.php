@@ -23,6 +23,7 @@ class BookController extends Controller
     #[Endpoint(title: 'List all books')]
     public function index(): AnonymousResourceCollection
     {
+        return BookResource::collection($this->bookService->getAll());
     }
 
     #[Endpoint(title: 'Create a book')]
@@ -34,6 +35,7 @@ class BookController extends Controller
     #[Endpoint(title: 'Get book details')]
     public function show(Book $book): BookResource
     {
+        return new BookResource($this->bookService->getById($book));
     }
 
     #[Endpoint(title: 'Update a book')]
@@ -45,5 +47,8 @@ class BookController extends Controller
     #[Response(status: 204)]
     public function destroy(Book $book): JsonResponse
     {
+        $this->bookService->delete($book);
+
+        return response()->json(null, 204);
     }
 }

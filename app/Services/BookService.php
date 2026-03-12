@@ -16,10 +16,12 @@ class BookService implements BookServiceInterface
     /** @return Collection<int, Book> */
     public function getAll(): Collection
     {
+        return Book::with('authors')->get();
     }
 
     public function getById(Book $book): Book
     {
+        return $book->load('authors');
     }
 
     public function create(StoreBookData $data): Book
@@ -32,5 +34,14 @@ class BookService implements BookServiceInterface
 
     public function delete(Book $book): void
     {
+        DB::transaction(function () use ($book) {
+            $authorIds = $book->authors()->pluck('authors.id')->all();
+
+            $book->delete();
+
+            if (! empty($authorIds)) {
+                UpdateAuthorsLastBookTitle::dispatch($authorIds);
+            }
+        });
     }
 }
