@@ -30,6 +30,11 @@ class BookController extends Controller
     #[Response(status: 201)]
     public function store(StoreBookRequest $request): JsonResponse
     {
+        $book = $this->bookService->create($request->toDto());
+
+        return (new BookResource($book))
+            ->response()
+            ->setStatusCode(201);
     }
 
     #[Endpoint(title: 'Get book details')]

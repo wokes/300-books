@@ -26,6 +26,22 @@ class BookService implements BookServiceInterface
 
     public function create(StoreBookData $data): Book
     {
+        return DB::transaction(function () use ($data) {
+            $book = Book::create([
+                'title' => $data->title,
+                'isbn' => $data->isbn,
+            ]);
+
+            $authorIds = collect($data->authors)->map(
+                fn (string $name) => Author::firstOrCreate(['name' => $name])->id,
+            )->all();
+
+            $book->authors()->attach($authorIds);
+
+            UpdateAuthorsLastBookTitle::dispatch($authorIds);
+
+            return $book->load('authors');
+        });
     }
 
     public function update(Book $book, UpdateBookData $data): Book
