@@ -172,5 +172,298 @@ describe('GET /api/books', function () {
 
             expect(Author::where('name', 'Same Author')->count())->toBe(1);
         });
+
+        it('validates required fields', function () {
+            $response = $this->postJson('/api/books', []);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['title', 'isbn', 'authors']);
+        });
+
+        it('validates title must be a string', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 12345,
+                'isbn' => '978-3-16-148410-0',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['title']);
+        });
+
+        it('validates title max length', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => str_repeat('a', 256),
+                'isbn' => '978-3-16-148410-0',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['title']);
+        });
+
+        it('accepts title at max length', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => str_repeat('a', 255),
+                'isbn' => '978-3-16-148410-0',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertCreated();
+        });
+
+        it('validates isbn must be a string', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => 9783161484100,
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['isbn']);
+        });
+
+        it('validates isbn max length', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => str_repeat('1', 18),
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['isbn']);
+        });
+
+        it('validates isbn format for isbn-13 with bad checksum', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '978-3-16-148410-9',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['isbn']);
+        });
+
+        it('validates isbn format for isbn-10 with bad checksum', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '0-306-40615-X',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['isbn']);
+        });
+
+        it('rejects isbn-13 not starting with 978 or 979', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '9771234567897',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['isbn']);
+        });
+
+        it('rejects isbn with only hyphens', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '---',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['isbn']);
+        });
+
+        it('rejects isbn with letters in body', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '978-ABC-DEF-0',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['isbn']);
+        });
+
+        it('accepts a valid isbn-10 without hyphens', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '0306406152',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertCreated();
+        });
+
+        it('accepts a valid isbn-10 with hyphens', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '0-306-40615-2',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertCreated();
+        });
+
+        it('accepts a valid isbn-10 ending with X', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '080442957X',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertCreated();
+        });
+
+        it('accepts a valid isbn-13 without hyphens', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '9783161484100',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertCreated();
+        });
+
+        it('accepts a valid isbn-13 with hyphens', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertCreated();
+        });
+
+        it('accepts a valid isbn-13 starting with 979', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '9791034344109',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertCreated();
+        });
+
+        it('validates isbn uniqueness', function () {
+            Book::factory()->create(['isbn' => '978-3-16-148410-0']);
+
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => ['Author'],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['isbn']);
+        });
+
+        it('validates authors must be an array', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => 'not an array',
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['authors']);
+        });
+
+        it('validates authors must be a non-empty array', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => [],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['authors']);
+        });
+
+        it('validates author names are strings', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => [123],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['authors.0']);
+        });
+
+        it('validates author name max length', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => [str_repeat('a', 256)],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['authors.0']);
+        });
+
+        it('accepts author name at max length', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => [str_repeat('a', 255)],
+            ]);
+
+            $response->assertCreated();
+        });
+
+        it('validates null values are rejected', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => null,
+                'isbn' => null,
+                'authors' => null,
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['title', 'isbn', 'authors']);
+        });
+
+        it('validates author entries cannot be null', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => [null],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['authors.0']);
+        });
+
+        it('validates author entries cannot be empty strings', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => [''],
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['authors.0']);
+        });
+
+        it('does not create book when validation fails', function () {
+            $this->postJson('/api/books', [
+                'title' => '',
+                'isbn' => 'invalid',
+                'authors' => [],
+            ]);
+
+            expect(Book::count())->toBe(0);
+            expect(Author::count())->toBe(0);
+        });
+
+        it('does not dispatch job when validation fails', function () {
+            $this->postJson('/api/books', []);
+
+            Queue::assertNothingPushed();
+        });
     });
 });
