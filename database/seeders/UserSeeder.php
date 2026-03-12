@@ -15,6 +15,12 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->environment('production')) {
+            $this->command->warn('Skipping UserSeeder in production environment.');
+
+            return;
+        }
+
         $user = User::factory()->create([
             'name' => 'Demo User',
             'email' => 'demo@example.com',
