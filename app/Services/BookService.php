@@ -9,7 +9,6 @@ use App\Models\Author;
 use App\Models\Book;
 use App\Services\Interfaces\BookServiceInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class BookService implements BookServiceInterface

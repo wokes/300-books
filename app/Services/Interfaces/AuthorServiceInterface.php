@@ -4,7 +4,6 @@ namespace App\Services\Interfaces;
 
 use App\Models\Author;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 
 interface AuthorServiceInterface
 {

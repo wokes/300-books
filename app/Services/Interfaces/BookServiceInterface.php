@@ -6,7 +6,6 @@ use App\DTOs\StoreBookData;
 use App\DTOs\UpdateBookData;
 use App\Models\Book;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 
 interface BookServiceInterface
 {

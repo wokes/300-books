@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Author;
 use App\Services\Interfaces\AuthorServiceInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 
 class AuthorService implements AuthorServiceInterface
 {
@@ -16,7 +15,7 @@ class AuthorService implements AuthorServiceInterface
 
         if ($search !== null) {
             $query->whereHas('books', function ($q) use ($search) {
-                $q->whereRaw('title ILIKE ?', ['%' . $search . '%']);
+                $q->whereRaw('title ILIKE ?', ['%'.$search.'%']);
             });
         }
 
