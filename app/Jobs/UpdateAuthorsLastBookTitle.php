@@ -22,6 +22,7 @@ class UpdateAuthorsLastBookTitle implements ShouldQueue
 
     public function handle(): void
     {
+        // Each is suboptimal, but it's unlikely we'll get a book with a million authors.
         Author::whereIn('id', $this->authorIds)
             ->each(function (Author $author) {
                 $lastBookTitle = $author->books()
