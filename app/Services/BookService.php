@@ -32,9 +32,9 @@ class BookService implements BookServiceInterface
                 'isbn' => $data->isbn,
             ]);
 
-            $authorIds = collect($data->authors)->map(
+            $authorIds = collect($data->authors)->unique()->map(
                 fn (string $name) => Author::firstOrCreate(['name' => $name])->id,
-            )->all();
+            )->values()->all();
 
             $book->authors()->attach($authorIds);
 
@@ -55,9 +55,9 @@ class BookService implements BookServiceInterface
             if ($data->authors !== null) {
                 $previousAuthorIds = $book->authors()->pluck('authors.id')->all();
 
-                $newAuthorIds = collect($data->authors)->map(
+                $newAuthorIds = collect($data->authors)->unique()->map(
                     fn (string $name) => Author::firstOrCreate(['name' => $name])->id,
-                )->all();
+                )->values()->all();
 
                 $book->authors()->sync($newAuthorIds);
 
