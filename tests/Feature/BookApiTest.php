@@ -544,4 +544,105 @@ describe('GET /api/books', function () {
             $response->assertNotFound();
         });
     });
+
+    describe('DELETE /api/books/{book}', function () {
+        it('deletes a book and dispatches author update job', function () {
+            $book = Book::factory()->create();
+            $author = Author::factory()->create();
+            $book->authors()->attach($author);
+
+            $response = $this->deleteJson("/api/books/{$book->id}");
+
+            $response->assertNoContent();
+
+            $this->assertDatabaseMissing('books', ['id' => $book->id]);
+            $this->assertDatabaseMissing('author_book', ['book_id' => $book->id]);
+
+            Queue::assertPushed(UpdateAuthorsLastBookTitle::class, function ($job) use ($author) {
+                return in_array($author->id, $job->authorIds);
+            });
+        });
+
+        it('returns empty body with 204 status', function () {
+            $book = Book::factory()->create();
+
+            $response = $this->deleteJson("/api/books/{$book->id}");
+
+            $response->assertNoContent();
+            expect($response->getContent())->toBeEmpty();
+        });
+
+        it('dispatches job with all author ids when book has multiple authors', function () {
+            $book = Book::factory()->create();
+            $authors = Author::factory()->count(3)->create();
+            $book->authors()->attach($authors->pluck('id'));
+
+            $this->deleteJson("/api/books/{$book->id}");
+
+            Queue::assertPushed(UpdateAuthorsLastBookTitle::class, function ($job) use ($authors) {
+                return count($job->authorIds) === 3
+                    && collect($authors->pluck('id'))->every(fn ($id) => in_array($id, $job->authorIds));
+            });
+        });
+
+        it('does not dispatch job when book has no authors', function () {
+            $book = Book::factory()->create();
+
+            $this->deleteJson("/api/books/{$book->id}");
+
+            Queue::assertNothingPushed();
+        });
+
+        it('preserves author records after book deletion', function () {
+            $book = Book::factory()->create();
+            $author = Author::factory()->create();
+            $book->authors()->attach($author);
+
+            $this->deleteJson("/api/books/{$book->id}");
+
+            $this->assertDatabaseHas('authors', ['id' => $author->id]);
+        });
+
+        it('removes pivot records on deletion', function () {
+            $book = Book::factory()->create();
+            $authors = Author::factory()->count(2)->create();
+            $book->authors()->attach($authors->pluck('id'));
+
+            $this->assertDatabaseCount('author_book', 2);
+
+            $this->deleteJson("/api/books/{$book->id}");
+
+            $this->assertDatabaseCount('author_book', 0);
+        });
+
+        it('does not affect other books when deleting', function () {
+            $author = Author::factory()->create();
+            $bookToKeep = Book::factory()->create();
+            $bookToDelete = Book::factory()->create();
+            $bookToKeep->authors()->attach($author);
+            $bookToDelete->authors()->attach($author);
+
+            $this->deleteJson("/api/books/{$bookToDelete->id}");
+
+            $this->assertDatabaseHas('books', ['id' => $bookToKeep->id]);
+            $this->assertDatabaseHas('author_book', [
+                'book_id' => $bookToKeep->id,
+                'author_id' => $author->id,
+            ]);
+        });
+
+        it('returns 404 for non-existent book', function () {
+            $response = $this->deleteJson('/api/books/999');
+
+            $response->assertNotFound();
+        });
+
+        it('returns 404 when deleting an already deleted book', function () {
+            $book = Book::factory()->create();
+            $bookId = $book->id;
+
+            $this->deleteJson("/api/books/{$bookId}")->assertNoContent();
+            $this->deleteJson("/api/books/{$bookId}")->assertNotFound();
+        });
+    });
 });
