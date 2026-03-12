@@ -18,7 +18,13 @@ class AuthorResource extends JsonResource
             'last_book_title' => $this->last_book_title,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'books' => BookResource::collection($this->whenLoaded('books')),
+            'books' => $this->whenLoaded('books', fn () => $this->books->map(fn ($book) => [
+                'id' => $book->id,
+                'title' => $book->title,
+                'isbn' => $book->isbn,
+                'created_at' => $book->created_at,
+                'updated_at' => $book->updated_at,
+            ])),
         ];
     }
 }

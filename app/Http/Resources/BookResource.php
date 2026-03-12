@@ -18,7 +18,11 @@ class BookResource extends JsonResource
             'isbn' => $this->isbn,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'authors' => AuthorResource::collection($this->whenLoaded('authors')),
+            'authors' => $this->whenLoaded('authors', fn () => $this->authors->map(fn ($author) => [
+                'id' => $author->id,
+                'name' => $author->name,
+                'last_book_title' => $author->last_book_title,
+            ])),
         ];
     }
 }
