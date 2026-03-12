@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\DTOs\UpdateBookData;
 use App\Rules\Isbn;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateBookRequest extends FormRequest
 {
@@ -13,7 +14,7 @@ class UpdateBookRequest extends FormRequest
     {
         return [
             'title' => ['sometimes', 'string', 'max:255'],
-            'isbn' => ['sometimes', 'string', 'max:17', new Isbn, 'unique:books,isbn,'.$this->route('book')->id],
+            'isbn' => ['sometimes', 'string', 'max:17', new Isbn, Rule::unique('books', 'isbn')->ignore($this->route('book'))],
             'authors' => ['sometimes', 'array', 'min:1'],
             'authors.*' => ['required', 'string', 'max:255'],
         ];
