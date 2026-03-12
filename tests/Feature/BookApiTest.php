@@ -121,5 +121,56 @@ describe('GET /api/books', function () {
             $response->assertCreated()
                 ->assertJsonCount(3, 'data.authors');
         });
+
+        it('reuses existing authors by name', function () {
+            $existingAuthor = Author::factory()->create(['name' => 'Existing Author']);
+
+            $payload = [
+                'title' => 'Another Book',
+                'isbn' => '978-0-13-468599-1',
+                'authors' => ['Existing Author', 'New Author'],
+            ];
+
+            $response = $this->postJson('/api/books', $payload);
+
+            $response->assertCreated();
+
+            expect(Author::where('name', 'Existing Author')->count())->toBe(1);
+            expect(Author::where('name', 'New Author')->count())->toBe(1);
+
+            $book = Book::where('isbn', '978-0-13-468599-1')->first();
+            expect($book->authors)->toHaveCount(2);
+            expect($book->authors->pluck('id'))->toContain($existingAuthor->id);
+        });
+
+        it('dispatches job with correct author ids including existing authors', function () {
+            $existingAuthor = Author::factory()->create(['name' => 'Existing']);
+
+            $this->postJson('/api/books', [
+                'title' => 'Test',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => ['Existing', 'Brand New'],
+            ]);
+
+            $newAuthor = Author::where('name', 'Brand New')->first();
+
+            Queue::assertPushed(UpdateAuthorsLastBookTitle::class, function ($job) use ($existingAuthor, $newAuthor) {
+                return count($job->authorIds) === 2
+                    && in_array($existingAuthor->id, $job->authorIds)
+                    && in_array($newAuthor->id, $job->authorIds);
+            });
+        });
+
+        it('handles duplicate author names in the array', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Duped Authors',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => ['Same Author', 'Same Author'],
+            ]);
+
+            $response->assertCreated();
+
+            expect(Author::where('name', 'Same Author')->count())->toBe(1);
+        });
     });
 });
