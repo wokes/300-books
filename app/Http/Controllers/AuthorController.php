@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\IndexRequest;
+use App\Http\Requests\IndexAuthorRequest;
 use App\Http\Resources\AuthorResource;
 use App\Models\Author;
 use App\Services\Interfaces\AuthorServiceInterface;
@@ -18,9 +18,9 @@ class AuthorController extends Controller
     ) {}
 
     #[Endpoint(operationId: 'authors.index', title: 'List all authors', description: 'Retrieve a paginated list of all authors.')]
-    public function index(IndexRequest $request): AnonymousResourceCollection
+    public function index(IndexAuthorRequest $request): AnonymousResourceCollection
     {
-        return AuthorResource::collection($this->authorService->getAll($request->perPage()));
+        return AuthorResource::collection($this->authorService->getAll($request->perPage(), $request->search()));
     }
 
     #[Endpoint(operationId: 'authors.show', title: 'Get author details', description: 'Retrieve the details of a specific author by their ID.')]

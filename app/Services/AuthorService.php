@@ -10,9 +10,17 @@ use Illuminate\Database\Eloquent\Collection;
 class AuthorService implements AuthorServiceInterface
 {
     /** @return LengthAwarePaginator<int, Author> */
-    public function getAll(int $perPage = 15): LengthAwarePaginator
+    public function getAll(int $perPage = 15, ?string $search = null): LengthAwarePaginator
     {
-        return Author::with('books')->paginate($perPage);
+        $query = Author::with('books');
+
+        if ($search !== null) {
+            $query->whereHas('books', function ($q) use ($search) {
+                $q->whereRaw('title ILIKE ?', ['%' . $search . '%']);
+            });
+        }
+
+        return $query->paginate($perPage);
     }
 
     public function getById(Author $author): Author

@@ -14,6 +14,9 @@ return new class extends Migration
             $table->string('isbn', 17)->unique();
             $table->timestamps();
         });
+
+        DB::statement('CREATE EXTENSION IF NOT EXISTS pg_trgm');
+        DB::statement('CREATE INDEX books_title_trgm_idx ON books USING GIN (title gin_trgm_ops)');
     }
 
     public function down(): void
