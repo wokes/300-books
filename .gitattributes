@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Force LF for shell scripts (including extensionless ones in docker/)
+*.sh text eol=lf
+docker/*/start-container text eol=lf

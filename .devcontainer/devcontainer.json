@@ -1,0 +1,22 @@
+{
+    "name": "Laravel Template (Octane)",
+    "dockerComposeFile": "../compose.yaml",
+    "service": "laravel.test",
+    "workspaceFolder": "/var/www/html",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "bmewburn.vscode-intelephense-client",
+                "xdebug.php-debug",
+                "EditorConfig.EditorConfig",
+                "mikestead.dotenv",
+                "m1guelpf.better-pest",
+                "eriklynd.json-tools"
+            ],
+            "settings": {
+                "php.validate.executablePath": "/usr/bin/php8.4",
+                "terminal.integrated.defaultProfile.linux": "bash"
+            }
+        }
+    }
+}

@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+if [ "$SUPERVISOR_PHP_USER" != "root" ] && [ "$SUPERVISOR_PHP_USER" != "sail" ]; then
+    echo "You should set SUPERVISOR_PHP_USER to either 'sail' or 'root'."
+    exit 1
+fi
+
+if [ ! -z "$WWWUSER" ]; then
+    usermod -u $WWWUSER sail
+fi
+
+gosu ${WWWUSER:-1337} git config --global --add safe.directory /var/www/html
+
+if [ ! -d /.composer ]; then
+    mkdir /.composer
+fi
+
+chmod -R ugo+rw /.composer
+
+cd /var/www/html
+
+if [ ! -f .env ] && [ -f .env.example ]; then
+    cp .env.example .env
+fi
+
+if [ -f composer.json ] && [ ! -f vendor/autoload.php ]; then
+    # Copy pre-installed vendor from image cache, then generate autoloader
+    cp -a /tmp/vendor-cache/. vendor/
+    composer dump-autoload --optimize --no-interaction
+fi
+
+if [ -f package.json ] && [ ! -f node_modules/.package-lock.json ]; then
+    cp -a /tmp/node-cache/. node_modules/
+fi
+
+# Fix ownership of writable directories for sail user
+chown -R ${WWWUSER:-1337}:sail storage bootstrap/cache 2>/dev/null || true
+
+if [ $# -gt 0 ]; then
+    if [ "$SUPERVISOR_PHP_USER" = "root" ]; then
+        exec "$@"
+    else
+        exec gosu $WWWUSER "$@"
+    fi
+else
+    php artisan key:generate --no-interaction --force
+    php artisan migrate:fresh --force --no-interaction
+    php artisan db:seed --class=UserSeeder --force --no-interaction
+    php artisan storage:link --no-interaction --force
+    exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+fi

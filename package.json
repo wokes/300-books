@@ -1,0 +1,7 @@
+{
+    "private": true,
+    "description": "chokidar is required for Octane's --watch file watcher",
+    "dependencies": {
+        "chokidar": "^4.0"
+    }
+}
