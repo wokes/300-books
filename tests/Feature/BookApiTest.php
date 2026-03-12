@@ -3,6 +3,7 @@
 use App\Jobs\UpdateAuthorsLastBookTitle;
 use App\Models\Author;
 use App\Models\Book;
+use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
@@ -56,6 +57,10 @@ describe('GET /api/books', function () {
     });
 
     describe('POST /api/books', function () {
+        beforeEach(function () {
+            $this->actingAs(User::factory()->create());
+        });
+
         it('creates a new book with new authors', function () {
             $payload = [
                 'title' => 'Test Book',
@@ -464,6 +469,31 @@ describe('GET /api/books', function () {
             $this->postJson('/api/books', []);
 
             Queue::assertNothingPushed();
+        });
+
+    });
+
+    describe('POST /api/books authentication', function () {
+        it('rejects unauthenticated user with 401', function () {
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test Book',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => ['Author One'],
+            ]);
+
+            $response->assertUnauthorized();
+        });
+
+        it('allows authenticated user to create a book', function () {
+            $this->actingAs(User::factory()->create());
+
+            $response = $this->postJson('/api/books', [
+                'title' => 'Test Book',
+                'isbn' => '978-3-16-148410-0',
+                'authors' => ['Author One'],
+            ]);
+
+            $response->assertCreated();
         });
     });
 
