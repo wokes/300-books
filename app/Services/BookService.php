@@ -46,6 +46,28 @@ class BookService implements BookServiceInterface
 
     public function update(Book $book, UpdateBookData $data): Book
     {
+        return DB::transaction(function () use ($book, $data) {
+            $book->update(array_filter([
+                'title' => $data->title,
+                'isbn' => $data->isbn,
+            ], fn ($value) => $value !== null));
+
+            if ($data->authors !== null) {
+                $previousAuthorIds = $book->authors()->pluck('authors.id')->all();
+
+                $newAuthorIds = collect($data->authors)->map(
+                    fn (string $name) => Author::firstOrCreate(['name' => $name])->id,
+                )->all();
+
+                $book->authors()->sync($newAuthorIds);
+
+                $affectedAuthorIds = array_values(array_unique([...$previousAuthorIds, ...$newAuthorIds]));
+
+                UpdateAuthorsLastBookTitle::dispatch($affectedAuthorIds);
+            }
+
+            return $book->load('authors');
+        });
     }
 
     public function delete(Book $book): void

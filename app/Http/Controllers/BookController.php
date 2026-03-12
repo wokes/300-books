@@ -46,6 +46,7 @@ class BookController extends Controller
     #[Endpoint(title: 'Update a book')]
     public function update(UpdateBookRequest $request, Book $book): BookResource
     {
+        return new BookResource($this->bookService->update($book, $request->toDto()));
     }
 
     #[Endpoint(title: 'Delete a book')]
