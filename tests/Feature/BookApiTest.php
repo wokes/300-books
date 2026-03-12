@@ -466,4 +466,82 @@ describe('GET /api/books', function () {
             Queue::assertNothingPushed();
         });
     });
+
+    describe('PUT /api/books/{book}', function () {
+        it('updates book title', function () {
+            $book = Book::factory()->create();
+            $author = Author::factory()->create();
+            $book->authors()->attach($author);
+
+            $response = $this->putJson("/api/books/{$book->id}", [
+                'title' => 'Updated Title',
+            ]);
+
+            $response->assertOk()
+                ->assertJsonPath('data.title', 'Updated Title');
+
+            $this->assertDatabaseHas('books', ['id' => $book->id, 'title' => 'Updated Title']);
+        });
+
+        it('updates book isbn', function () {
+            $book = Book::factory()->create();
+
+            $response = $this->putJson("/api/books/{$book->id}", [
+                'isbn' => '978-3-16-148410-0',
+            ]);
+
+            $response->assertOk()
+                ->assertJsonPath('data.isbn', '978-3-16-148410-0');
+        });
+
+        it('allows keeping the same isbn on update', function () {
+            $book = Book::factory()->create(['isbn' => '978-3-16-148410-0']);
+
+            $response = $this->putJson("/api/books/{$book->id}", [
+                'isbn' => '978-3-16-148410-0',
+            ]);
+
+            $response->assertOk();
+        });
+
+        it('rejects duplicate isbn from another book', function () {
+            Book::factory()->create(['isbn' => '978-3-16-148410-0']);
+            $book = Book::factory()->create();
+
+            $response = $this->putJson("/api/books/{$book->id}", [
+                'isbn' => '978-3-16-148410-0',
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['isbn']);
+        });
+
+        it('updates author relationships', function () {
+            $book = Book::factory()->create();
+            $oldAuthor = Author::factory()->create(['name' => 'Old Author']);
+            $book->authors()->attach($oldAuthor);
+
+            $response = $this->putJson("/api/books/{$book->id}", [
+                'authors' => ['New Author One', 'New Author Two'],
+            ]);
+
+            $response->assertOk()
+                ->assertJsonCount(2, 'data.authors');
+
+            $book->refresh();
+            expect($book->authors->pluck('name')->all())->toEqualCanonicalizing(['New Author One', 'New Author Two']);
+
+            Queue::assertPushed(UpdateAuthorsLastBookTitle::class, function ($job) use ($oldAuthor) {
+                return in_array($oldAuthor->id, $job->authorIds);
+            });
+        });
+
+        it('returns 404 for non-existent book', function () {
+            $response = $this->putJson('/api/books/999', [
+                'title' => 'Updated',
+            ]);
+
+            $response->assertNotFound();
+        });
+    });
 });
