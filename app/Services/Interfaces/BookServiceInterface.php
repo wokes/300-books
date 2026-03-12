@@ -5,12 +5,13 @@ namespace App\Services\Interfaces;
 use App\DTOs\StoreBookData;
 use App\DTOs\UpdateBookData;
 use App\Models\Book;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 interface BookServiceInterface
 {
-    /** @return Collection<int, Book> */
-    public function getAll(): Collection;
+    /** @return LengthAwarePaginator<int, Book> */
+    public function getAll(int $perPage = 15): LengthAwarePaginator;
 
     public function getById(Book $book): Book;
 

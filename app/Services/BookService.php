@@ -8,15 +8,16 @@ use App\Jobs\UpdateAuthorsLastBookTitle;
 use App\Models\Author;
 use App\Models\Book;
 use App\Services\Interfaces\BookServiceInterface;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class BookService implements BookServiceInterface
 {
-    /** @return Collection<int, Book> */
-    public function getAll(): Collection
+    /** @return LengthAwarePaginator<int, Book> */
+    public function getAll(int $perPage = 15): LengthAwarePaginator
     {
-        return Book::with('authors')->get();
+        return Book::with('authors')->paginate($perPage);
     }
 
     public function getById(Book $book): Book

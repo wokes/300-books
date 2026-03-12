@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IndexRequest;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Http\Resources\BookResource;
@@ -20,10 +21,10 @@ class BookController extends Controller
         private readonly BookServiceInterface $bookService,
     ) {}
 
-    #[Endpoint(operationId: 'books.index', title: 'List all books', description: 'Retrieve a list of all books.')]
-    public function index(): AnonymousResourceCollection
+    #[Endpoint(operationId: 'books.index', title: 'List all books', description: 'Retrieve a paginated list of all books.')]
+    public function index(IndexRequest $request): AnonymousResourceCollection
     {
-        return BookResource::collection($this->bookService->getAll());
+        return BookResource::collection($this->bookService->getAll($request->perPage()));
     }
 
     #[Endpoint(operationId: 'books.store', title: 'Create a book', description: 'Store a newly created book and associate it with authors.')]
