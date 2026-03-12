@@ -19,10 +19,12 @@ class AuthorController extends Controller
     #[Endpoint(title: 'List all authors')]
     public function index(): AnonymousResourceCollection
     {
+        return AuthorResource::collection($this->authorService->getAll());
     }
 
     #[Endpoint(title: 'Get author details')]
     public function show(Author $author): AuthorResource
     {
+        return new AuthorResource($this->authorService->getById($author));
     }
 }
