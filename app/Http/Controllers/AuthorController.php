@@ -16,13 +16,13 @@ class AuthorController extends Controller
         private readonly AuthorServiceInterface $authorService,
     ) {}
 
-    #[Endpoint(title: 'List all authors')]
+    #[Endpoint(operationId: 'authors.index', title: 'List all authors', description: 'Retrieve a list of all authors.')]
     public function index(): AnonymousResourceCollection
     {
         return AuthorResource::collection($this->authorService->getAll());
     }
 
-    #[Endpoint(title: 'Get author details')]
+    #[Endpoint(operationId: 'authors.show', title: 'Get author details', description: 'Retrieve the details of a specific author by their ID.')]
     public function show(Author $author): AuthorResource
     {
         return new AuthorResource($this->authorService->getById($author));

@@ -20,13 +20,13 @@ class BookController extends Controller
         private readonly BookServiceInterface $bookService,
     ) {}
 
-    #[Endpoint(title: 'List all books')]
+    #[Endpoint(operationId: 'books.index', title: 'List all books', description: 'Retrieve a list of all books.')]
     public function index(): AnonymousResourceCollection
     {
         return BookResource::collection($this->bookService->getAll());
     }
 
-    #[Endpoint(title: 'Create a book')]
+    #[Endpoint(operationId: 'books.store', title: 'Create a book', description: 'Store a newly created book and associate it with authors.')]
     #[Response(status: 201)]
     public function store(StoreBookRequest $request): JsonResponse
     {
@@ -37,19 +37,19 @@ class BookController extends Controller
             ->setStatusCode(201);
     }
 
-    #[Endpoint(title: 'Get book details')]
+    #[Endpoint(operationId: 'books.show', title: 'Get book details', description: 'Retrieve the details of a specific book by its ID.')]
     public function show(Book $book): BookResource
     {
         return new BookResource($this->bookService->getById($book));
     }
 
-    #[Endpoint(title: 'Update a book')]
+    #[Endpoint(operationId: 'books.update', title: 'Update a book', description: 'Update the details of an existing book.')]
     public function update(UpdateBookRequest $request, Book $book): BookResource
     {
         return new BookResource($this->bookService->update($book, $request->toDto()));
     }
 
-    #[Endpoint(title: 'Delete a book')]
+    #[Endpoint(operationId: 'books.destroy', title: 'Delete a book', description: 'Remove a book from the collection.')]
     #[Response(status: 204)]
     public function destroy(Book $book): JsonResponse
     {
