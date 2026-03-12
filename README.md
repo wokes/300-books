@@ -14,6 +14,7 @@ The spec left some areas open to interpretation. Here's some thoughts/decisions 
     - The spec references first and last name for authors, but I store both in a single column. This better accommodates authors with complex or non-Western name structures without affecting functionality.
 - Related models are fully loaded on relevant endpoints. Ideally these would be capped (e.g. `limit(100)` on the relationship - Laravel 12 correctly applies per-parent limits). When the `search` query parameter is supplied on `GET /api/authors`, it could also filter related books to only those matching the query.
 - Search is implemented using Postgres-specific features, since that's the chosen database for this stack.
+- Job for updating last published book title is dispatched directly from the service instead of an event listener, which does not strictly adhere to SOLID principles. Doing so would add unnecessary complexity (since attach/sync/detach don't fire events), for very little benefit.
 - The stack is slightly overbuilt for this assignment - e.g. a scheduler container is running but unused. Octane is also overkill, but `php artisan serve`'s synchronicity and response times leave a lot to be desired.
 
 ## Features
