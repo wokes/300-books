@@ -11,7 +11,7 @@ The spec left some areas open to interpretation. Here's some thoughts/decisions 
 - Since there's no `POST /api/authors` endpoint and the Artisan command is listed as a bonus, I opted to create authors on-demand when books are created.
 - Model columns weren't strictly defined:
     - Added ISBN to books for additional data to work with.
-    - The spec references first and last name for authors, but I store both in a single column. This better accommodates authors with complex or non-Western name structures without affecting functionality.
+    - The spec references first and last name for authors, but I store both in a single column. This better accommodates authors with more complex/non-standard name structures without affecting functionality.
 - Related models are fully loaded on relevant endpoints. Ideally these would be capped (e.g. `limit(100)` on the relationship - Laravel 12 correctly applies per-parent limits). When the `search` query parameter is supplied on `GET /api/authors`, it could also filter related books to only those matching the query.
 - Search is implemented using Postgres-specific features, since that's the chosen database for this stack.
 - Job for updating last published book title is dispatched directly from the service instead of an event listener, which does not strictly adhere to SOLID principles. Doing so would add unnecessary complexity (since attach/sync/detach don't fire events), for very little benefit.
