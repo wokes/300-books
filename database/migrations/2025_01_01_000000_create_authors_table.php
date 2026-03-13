@@ -13,6 +13,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('last_book_title')->nullable();
             $table->timestamps();
+
+            $table->index('name');
         });
     }
 
