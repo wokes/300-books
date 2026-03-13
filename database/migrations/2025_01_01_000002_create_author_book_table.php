@@ -15,6 +15,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['author_id', 'book_id']);
+            $table->index('book_id');
+            $table->index(['author_id', 'created_at']);
         });
     }
 
