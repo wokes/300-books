@@ -7,6 +7,7 @@ Based on my template that is slightly overkill for this assignment.
 ## Thoughts / Notes
 The spec left some areas open to interpretation. Here's some thoughts/decisions made:
 - Sanctum auth was only specified for one endpoint, so only that endpoint requires it. In a real application I'd limit public access to GET endpoints only.
+- There was no mention of user management endpoints, so I operated under the assumption that this is beyond the scope of the assignment. App generates a demo user with a static API key on startup.
 - Deleting a book does not remove its authors, even if they no longer have any associated books.
 - Since there's no `POST /api/authors` endpoint and the Artisan command is listed as a bonus, I opted to create authors on-demand when books are created.
 - Model columns weren't strictly defined:
